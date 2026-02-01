@@ -21,14 +21,26 @@
          - name: Setup Android SDK                                                                                                                                                              
            uses: android-actions/setup-android@v3                                                                                                                                               
                                                                                                                                                                                                 
+         - name: Create local.properties                                                                                                                                                        
+           working-directory: apps/android                                                                                                                                                      
+           run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties                                                                                                                             
+                                                                                                                                                                                                
          - name: Build Debug APK                                                                                                                                                                
            working-directory: apps/android                                                                                                                                                      
            run: |                                                                                                                                                                               
              chmod +x gradlew                                                                                                                                                                   
-             ./gradlew :app:assembleDebug --max-workers=1                                                                                                                                       
+             ./gradlew :app:assembleDebug --stacktrace                                                                                                                                          
+           timeout-minutes: 30                                                                                                                                                                  
+                                                                                                                                                                                                
+         - name: Check APK exists                                                                                                                                                               
+           run: |                                                                                                                                                                               
+             find apps/android -name "*.apk" -type f                                                                                                                                            
+             ls -la apps/android/app/build/outputs/apk/debug/ || echo "APK directory not found"                                                                                                 
                                                                                                                                                                                                 
          - name: Upload APK                                                                                                                                                                     
            uses: actions/upload-artifact@v4                                                                                                                                                     
+           if: success()                                                                                                                                                                        
            with:                                                                                                                                                                                
              name: openclaw-android-debug                                                                                                                                                       
-             path: apps/android/app/build/outputs/apk/debug/app-debug.apk    
+             path: apps/android/app/build/outputs/apk/debug/*.apk                                                                                                                               
+             if-no-files-found: warn     
